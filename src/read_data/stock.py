@@ -22,9 +22,9 @@ class stock():
 
     """
 
-    def __init__(self, symbol):
+    def __init__(self, symbol, period = '1mo'):
         self.symbol = symbol
-        self.ohlc_data = self.get_stock_data(period = '1mo') #self.read_stock_data(data_path)
+        self.ohlc_data = self.get_stock_data(period = period    ) #self.read_stock_data(data_path)
         self.stats = {}
 
     def get_stock_data(self, period = "1mo"):
@@ -97,7 +97,7 @@ class stock():
         return self.stats[time_period_in_days]
 
 
-    def simple_moving_avg(self, time_period_in_days):
+    def simple_moving_avg(self, time_period_in_days = 5):
         """Method to generate simple moving average of stock price data.
 
         Parameters
@@ -113,7 +113,7 @@ class stock():
         """
         return self.ohlc_data.rolling("{0}D".format(time_period_in_days)).mean()
 
-    def exp_moving_avg(self, alpha):
+    def exp_moving_avg(self, alpha = 0.1):
         """Method to generate Exponential Moving Average of stock price data
 
         Parameters

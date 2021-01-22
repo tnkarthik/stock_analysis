@@ -1,1 +1,1 @@
-from . import read_data, plotting, plot
+from . import read_data, plotting
