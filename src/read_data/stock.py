@@ -1,5 +1,6 @@
 import pandas as pd
 import os
+import yfinance as yf
 
 class stock():
     """Basic stock class.
@@ -21,10 +22,27 @@ class stock():
 
     """
 
-    def __init__(self, symbol, data_path):
+    def __init__(self, symbol):
         self.symbol = symbol
-        self.ohlc_data = self.read_stock_data(data_path)
+        self.ohlc_data = self.get_stock_data(period = '1mo') #self.read_stock_data(data_path)
         self.stats = {}
+
+    def get_stock_data(self, period = "1mo"):
+        """Function to get stock data using the yfinance app.
+
+        Parameters
+        ----------
+        period : str
+            Time period to get stock data for.
+
+        Returns
+        -------
+        pandas DataFrame
+            pandas DataFrame with OHLC, Volume, dividend, stock split data
+
+        """
+        data = yf.Ticker(self.symbol).history(period = period)
+        return data
 
     def read_stock_data(self, data_path):
         """Method to read in stock OHLC price data from txt file.

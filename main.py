@@ -5,7 +5,7 @@ from src.read_data import stock
 from src import plotting
 #from plot import *
 
-data_path = "./data/test_data"
+#data_path = "./data/test_data"
 
 
 def stock_analysis(list_of_stock_symbols):
@@ -19,11 +19,11 @@ def stock_analysis(list_of_stock_symbols):
     Returns
     -------
     None
-        
+
 
     """
     #### Read the stock data
-    stocks = [stock(symbol, data_path) for symbol in list_of_stock_symbols]
+    stocks = [stock(symbol) for symbol in list_of_stock_symbols]
     print(list_of_stock_symbols)
 
     #### Plot stock correlations
