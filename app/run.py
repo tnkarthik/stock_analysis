@@ -4,12 +4,13 @@ import pandas as pd
 
 from flask import Flask
 from flask import render_template, request, jsonify
-from plotly.graph_objs import Bar, Histogram, Scatter
+from plotly.graph_objs import Bar, Histogram, Scatter, Table
 import plotly.graph_objs as go
 import yfinance as yf
 
 import sys
 import re
+import datetime as dt
 
 app = Flask(__name__)
 
@@ -56,15 +57,23 @@ def go():
     # save user input in query
     query = request.args.get('query', '')
 
-    stocks = ['AAPL', 'GOOG']
-    ford = yf.Ticker(query).history(period = '1mo')
+    stock = yf.Ticker(query).history(period = '1y')
 
     graphs = [
         {
             'data': [
                 Scatter(
-                    x=ford.index,
-                    y=ford['Close']
+                    x=stock.index,
+                    y=stock['Close'],
+                    mode = 'markers',
+                    name = query
+                ),
+
+                Scatter(
+                    x = stock.index,
+                    y = stock.ewm(alpha = 0.2).mean()['Close'],
+                    mode = 'lines',
+                    name = query
                 )
             ],
 
@@ -77,6 +86,22 @@ def go():
                     'title': "DateTime"
                 }
             }
+        },
+
+        {
+            'data': [
+                Table(
+                    header=dict(values = ['DateTime'] + stock.columns.tolist(), \
+                                fill = dict(color = 'paleturquoise')),
+                    cells=dict(values = \
+                               [[dt.datetime.strftime(x, "%m-%d-%Y") for x in stock.index]] + \
+                               [stock[col].apply(lambda x: round(x,2)) \
+                                                for col in stock.columns]),
+
+                )
+            ],
+
+
         }
     ]
 
