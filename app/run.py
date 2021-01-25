@@ -11,6 +11,11 @@ import yfinance as yf
 import sys
 import re
 import datetime as dt
+import sys
+
+sys.path.append("..")
+
+from src.stock import stock
 
 app = Flask(__name__)
 
@@ -19,14 +24,15 @@ app = Flask(__name__)
 @app.route('/')
 @app.route('/index')
 def index():
-    aapl = yf.Ticker('AAPL').history(period = '1mo')
+    aapl = stock('AAPL', period = '1y')
+    data = aapl.ohlc_data#yf.Ticker('AAPL').history(period = '1mo')
 
     graphs = [
         {
             'data': [
                 Scatter(
-                    x=aapl.index,
-                    y=aapl['Close']
+                    x=data.index,
+                    y=data['Close']
                 )
             ],
 
@@ -57,23 +63,31 @@ def go():
     # save user input in query
     query = request.args.get('query', '')
 
-    stock = yf.Ticker(query).history(period = '1y')
+    stock_query = stock(query, period = '1y')
+    data = stock_query.ohlc_data#yf.Ticker(query).history(period = '1y')
 
     graphs = [
         {
             'data': [
                 Scatter(
-                    x=stock.index,
-                    y=stock['Close'],
+                    x=data.index,
+                    y=data['Close'],
                     mode = 'markers',
                     name = query
                 ),
 
                 Scatter(
-                    x = stock.index,
-                    y = stock.ewm(alpha = 0.2).mean()['Close'],
+                    x = data.index,
+                    y = data.ewm(alpha = 0.2).mean()['Close'],
                     mode = 'lines',
-                    name = query
+                    name = 'EWMA alpha = {0}'.format(0.2)
+                ),
+
+                Scatter(
+                    x = data.index,
+                    y = data.rolling("5D").mean()['Close'],
+                    mode = 'lines',
+                    name = 'SMA period: {0}'.format("5D")
                 )
             ],
 
@@ -91,18 +105,20 @@ def go():
         {
             'data': [
                 Table(
-                    header=dict(values = ['DateTime'] + stock.columns.tolist(), \
+                    header=dict(values = ['DateTime'] + data.columns.tolist(), \
                                 fill = dict(color = 'paleturquoise')),
                     cells=dict(values = \
-                               [[dt.datetime.strftime(x, "%m-%d-%Y") for x in stock.index]] + \
-                               [stock[col].apply(lambda x: round(x,2)) \
-                                                for col in stock.columns]),
+                               [[dt.datetime.strftime(x, "%m-%d-%Y") for x in data.index]] + \
+                               [data[col].apply(lambda x: round(x,2)) \
+                                                for col in data.columns]),
 
                 )
             ],
 
 
-        }
+        },
+
+
     ]
 
     # encode plotly graphs in JSON

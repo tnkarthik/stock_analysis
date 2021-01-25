@@ -25,6 +25,7 @@ class stock():
     def __init__(self, symbol, period = '1mo'):
         self.symbol = symbol
         self.ohlc_data = self.get_stock_data(period = period) #self.read_stock_data(data_path)
+        self.stats = {}
         self.stats = self.generate_summary_stats(time_period_in_days = self.ohlc_data.shape[0])
 
     def get_stock_data(self, period = "1mo"):
@@ -91,7 +92,7 @@ class stock():
                    {1} days".format(time_period_in_days, self.ohlc_data.index))
 
         if not self.stats.get(time_period_in_days, []):
-            temp = self.ohlc_data.iloc[-time_period_in_days]["close"]
+            temp = self.ohlc_data.iloc[-time_period_in_days]["Close"]
             self.stats[time_period_in_days] = (temp.mean(), temp.std())
 
         return self.stats[time_period_in_days]
@@ -130,8 +131,29 @@ class stock():
         return self.ohlc_data.ewm(alpha = alpha).mean()
 
 
-    def bollinger_bands(self,):
-        pass
+    def bollinger_bands(self, time_period_in_days = 20):
+        """Function to calculate Bollinger Bands.
+
+        Parameters
+        ----------
+        time_period_in_days : int
+            Number of days to calculate avg and stdev.
+
+        Returns
+        -------
+        tuple
+            Tuple of pandas DataFrame objects containing Bollinger Band data
+
+        """
+        data = self.ohlc_data
+        period = min(time_period_in_days, self.ohlc_data.shape[0])
+        typical_price = (data['Close'] + data['High'] + data['Low'])/3.0
+        rolling = typical_price.rolling("{0}D".format(period))
+        sma = rolling.mean()
+        stdev = rolling.stdev()
+        BOLU = sma + 2.0*stdev
+        BOLD = sma - 2.0*stdev
+        return BOLU, BOLD
 
 
     def technicals(self,):
