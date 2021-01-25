@@ -24,8 +24,8 @@ class stock():
 
     def __init__(self, symbol, period = '1mo'):
         self.symbol = symbol
-        self.ohlc_data = self.get_stock_data(period = period    ) #self.read_stock_data(data_path)
-        self.stats = {}
+        self.ohlc_data = self.get_stock_data(period = period) #self.read_stock_data(data_path)
+        self.stats = self.generate_summary_stats(time_period_in_days = self.ohlc_data.shape[0])
 
     def get_stock_data(self, period = "1mo"):
         """Function to get stock data using the yfinance app.
@@ -128,3 +128,11 @@ class stock():
 
         """
         return self.ohlc_data.ewm(alpha = alpha).mean()
+
+
+    def bollinger_bands(self,):
+        pass
+
+
+    def technicals(self,):
+        pass

@@ -1,1 +1,1 @@
-from .process import correlation, time_series
+from .plots import correlation, time_series
