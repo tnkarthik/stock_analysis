@@ -150,7 +150,7 @@ class stock():
         typical_price = (data['Close'] + data['High'] + data['Low'])/3.0
         rolling = typical_price.rolling("{0}D".format(period))
         sma = rolling.mean()
-        stdev = rolling.stdev()
+        stdev = rolling.std()
         BOLU = sma + 2.0*stdev
         BOLD = sma - 2.0*stdev
         return BOLU, BOLD

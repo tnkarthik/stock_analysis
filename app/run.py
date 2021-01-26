@@ -16,6 +16,7 @@ import sys
 sys.path.append("..")
 
 from src.stock import stock
+from src.plotting import basic_plots
 
 app = Flask(__name__)
 
@@ -24,30 +25,9 @@ app = Flask(__name__)
 @app.route('/')
 @app.route('/index')
 def index():
-    aapl = stock('AAPL', period = '1y')
-    data = aapl.ohlc_data#yf.Ticker('AAPL').history(period = '1mo')
-
-    graphs = [
-        {
-            'data': [
-                Scatter(
-                    x=data.index,
-                    y=data['Close']
-                )
-            ],
-
-            'layout': {
-                'title': 'AAPL stock performance',
-                'yaxis': {
-                    'title': "Stock Value"
-                },
-                'xaxis': {
-                    'title': "DateTime"
-                }
-            }
-        }
-
-    ]
+    ticker = 'AAPL'
+    period = '1y'
+    graphs = basic_plots(ticker, period)
 
     # encode plotly graphs in JSON
     ids = ["graph-{}".format(i) for i, _ in enumerate(graphs)]
@@ -61,77 +41,18 @@ def index():
 @app.route('/go')
 def go():
     # save user input in query
-    query = request.args.get('query', '')
-
-    stock_query = stock(query, period = '1y')
-    data = stock_query.ohlc_data#yf.Ticker(query).history(period = '1y')
-
-    graphs = [
-        {
-            'data': [
-                Scatter(
-                    x=data.index,
-                    y=data['Close'],
-                    mode = 'markers',
-                    name = query
-                ),
-
-                Scatter(
-                    x = data.index,
-                    y = data.ewm(alpha = 0.2).mean()['Close'],
-                    mode = 'lines',
-                    name = 'EWMA alpha = {0}'.format(0.2)
-                ),
-
-                Scatter(
-                    x = data.index,
-                    y = data.rolling("5D").mean()['Close'],
-                    mode = 'lines',
-                    name = 'SMA period: {0}'.format("5D")
-                )
-            ],
-
-            'layout': {
-                'title': '{0} stock performance'.format(query),
-                'yaxis': {
-                    'title': "Stock Value"
-                },
-                'xaxis': {
-                    'title': "DateTime"
-                }
-            }
-        },
-
-        {
-            'data': [
-                Table(
-                    header=dict(values = ['DateTime'] + data.columns.tolist(), \
-                                fill = dict(color = 'paleturquoise')),
-                    cells=dict(values = \
-                               [[dt.datetime.strftime(x, "%m-%d-%Y") for x in data.index]] + \
-                               [data[col].apply(lambda x: round(x,2)) \
-                                                for col in data.columns]),
-
-                )
-            ],
-
-
-        },
-
-
-    ]
+    ticker = request.args.get('query', '')
+    period = '1y'
+    graphs = basic_plots(ticker, period)
 
     # encode plotly graphs in JSON
     ids = ["graph-{}".format(i) for i, _ in enumerate(graphs)]
     graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
 
-
-
-
 # This will render the go.html Please see that file.
     return render_template(
         'go.html',
-        query=query, ids=ids, graphJSON=graphJSON)
+        query=ticker, ids=ids, graphJSON=graphJSON)
 
 
 def main():

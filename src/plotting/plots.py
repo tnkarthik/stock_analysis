@@ -1,10 +1,110 @@
 import sys
+import datetime as dt
 sys.path.append("..")
 
 import matplotlib.pyplot as plt
 
 import numpy as np
 import pandas as pd
+
+from plotly.graph_objs import Scatter, Table
+from src.stock import stock
+
+
+def basic_plots(ticker, period = '1y'):
+    """Function to generate basic stock plots.
+
+    Parameters
+    ----------
+    ticker : str
+        Stock Ticker Symbol.
+    period : str
+        Time period to display data for.
+
+    Returns
+    -------
+    list
+        list of plotly.graph_objs.
+
+    """
+    stock_info = stock(ticker, period)
+    data = stock_info.ohlc_data
+    bolu, bold = stock_info.bollinger_bands(time_period_in_days = 20)
+    data_ewm = stock_info.exp_moving_avg(alpha = 0.2)
+
+    graphs = [
+        {
+            'data': [
+                Scatter(
+                    x=data.index,
+                    y=data['Close'],
+                    name = "{0} closing price".format(ticker),
+                    mode = 'markers',
+                    marker_color = 'green'
+                ),
+
+                Scatter(
+                    x = data_ewm.index,
+                    y = data_ewm['Close'],
+                    name = 'EWMA',
+                    mode = 'lines',
+                    line_color = 'green'
+                ),
+
+                Scatter(
+                    x = bold.index,
+                    y = bold.values,
+                    mode = 'lines',
+                    name = 'lower bollinger band',
+                    line_color = 'orange'
+                ),
+
+                Scatter(
+                    x = bolu.index,
+                    y = bolu.values,
+                    mode = 'lines',
+                    fill = 'tonexty',
+                    name = 'upper bollinger band',
+                    line_color = 'orange',
+                    fillcolor = 'rgba(0,255,0,0.4)'
+                )
+            ],
+
+            'layout': {
+                'title': '{0} stock performance'.format(ticker),
+                'yaxis': {
+                    'title': "Stock Value"
+                },
+                'xaxis': {
+                    'title': "DateTime"
+                }
+            }
+        },
+
+        {
+            'data': [
+                Table(
+                    header=dict(values = ['DateTime'] + data.columns.tolist(), \
+                                fill = dict(color = 'paleturquoise')),
+                    cells=dict(values = \
+                               [[dt.datetime.strftime(x, "%m-%d-%Y") for x in data.index]] + \
+                               [data[col].apply(lambda x: round(x,2)) \
+                                                for col in data.columns]),
+
+                )
+            ],
+
+            'layout': {
+                'title': '{0} Stock Data Summary'.format(ticker)
+            }
+
+
+        },
+
+
+    ]
+
+    return graphs
 
 #from ..read_data import stock
 
