@@ -41,8 +41,8 @@ def index():
 @app.route('/go')
 def go():
     # save user input in query
-    ticker = request.args.get('query', '')
-    period = '1y'
+    ticker = request.args.get('query', '').upper()
+    period = request.args.get('timeperiod', '1y')
     graphs = basic_plots(ticker, period)
 
     # encode plotly graphs in JSON
