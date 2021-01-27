@@ -10,6 +10,19 @@ import pandas as pd
 from plotly.graph_objs import Scatter, Table
 from src.stock import stock
 
+def trace(x, y, name, mode, line_color, fill = None, fillcolor = None):
+    trace = \
+            Scatter(
+                x = x,
+                y = y,
+                mode = mode,
+                name = name,
+                line_color = line_color,
+                fill = fill,
+                fillcolor = fillcolor
+            )
+    return trace
+
 
 def basic_plots(ticker, period = '1y'):
     """Function to generate basic stock plots.
@@ -32,76 +45,74 @@ def basic_plots(ticker, period = '1y'):
     bolu, bold = stock_info.bollinger_bands(time_period_in_days = 20)
     data_ewm = stock_info.exp_moving_avg(alpha = 0.2)
 
+    summary_cols = ['Open', 'High', 'Low', 'Close']
+    data_summary = stock_info.ohlc_data[summary_cols].\
+                    agg([np.mean, np.std, np.max, np.min])
+
+    #### Define traces and layout for Scatter plot
+    trace_stock = trace(data.index, data['Close'], ticker, 'markers', 'green')
+    trace_ewma =  trace(data_ewm.index, data_ewm['Close'], 'EWMA', 'lines', 'green')
+    trace_bold =  trace(bold.index, bold.values, 'Lower Bollinger Band', 'lines', 'orange')
+    trace_bolu =  trace(bolu.index, bolu.values, 'Upper Bollinger Band', \
+                        'lines', 'orange', 'tonexty', 'rgba(0,255,0,0.4)')
+
+    layout_scatter = \
+                    {
+                        'title': '{0} stock performance'.format(ticker),
+                        'yaxis':
+                        {
+                            'title': "Stock Value"
+                        },
+                        'xaxis':
+                        {
+                            'title': "DateTime"
+                        }
+                    }
+
+
+    #### Define tables and layout for summary/data tables
+    table_summary = \
+            Table(
+                header=dict(values = [''] + data_summary.columns.tolist(), \
+                            fill = dict(color = 'paleturquoise')),
+                cells=dict(values = \
+                           [['mean', 'stdev', 'max', 'min']] + \
+                           [data_summary[col].apply(lambda x: round(x,2)) \
+                                            for col in data_summary.columns]),
+            )
+
+    table_data = \
+            Table(
+                header=dict(values = ['DateTime'] + data.columns.tolist(), \
+                            fill = dict(color = 'paleturquoise')),
+                cells=dict(values = \
+                           [[dt.datetime.strftime(x, "%m-%d-%Y") for x in data.index]] + \
+                           [data[col].apply(lambda x: round(x,2)) \
+                                            for col in data.columns]),
+            )
+
+    #### Create a list of all graph objects to be displayed
     graphs = [
         {
-            'data': [
-                Scatter(
-                    x=data.index,
-                    y=data['Close'],
-                    name = "{0} closing price".format(ticker),
-                    mode = 'markers',
-                    marker_color = 'green'
-                ),
+            'data': [trace_stock, trace_ewma, trace_bold, trace_bolu],
+            'layout': layout_scatter
+        },
 
-                Scatter(
-                    x = data_ewm.index,
-                    y = data_ewm['Close'],
-                    name = 'EWMA',
-                    mode = 'lines',
-                    line_color = 'green'
-                ),
-
-                Scatter(
-                    x = bold.index,
-                    y = bold.values,
-                    mode = 'lines',
-                    name = 'lower bollinger band',
-                    line_color = 'orange'
-                ),
-
-                Scatter(
-                    x = bolu.index,
-                    y = bolu.values,
-                    mode = 'lines',
-                    fill = 'tonexty',
-                    name = 'upper bollinger band',
-                    line_color = 'orange',
-                    fillcolor = 'rgba(0,255,0,0.4)'
-                )
-            ],
-
-            'layout': {
-                'title': '{0} stock performance'.format(ticker),
-                'yaxis': {
-                    'title': "Stock Value"
-                },
-                'xaxis': {
-                    'title': "DateTime"
-                }
+        {
+            'data': [table_summary],
+            'layout':
+            {
+                'title': '{0} Stock Data Summary'.format(ticker)
             }
         },
 
         {
-            'data': [
-                Table(
-                    header=dict(values = ['DateTime'] + data.columns.tolist(), \
-                                fill = dict(color = 'paleturquoise')),
-                    cells=dict(values = \
-                               [[dt.datetime.strftime(x, "%m-%d-%Y") for x in data.index]] + \
-                               [data[col].apply(lambda x: round(x,2)) \
-                                                for col in data.columns]),
-
-                )
-            ],
-
-            'layout': {
-                'title': '{0} Stock Data Summary'.format(ticker)
+            'data': [table_data],
+            'layout':
+            {
+                'title': '{0} Stock Data'.format(ticker)
             }
-
-
         },
-
-
     ]
 
     return graphs
